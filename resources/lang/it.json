@@ -1,0 +1,20 @@
+{
+    "novaIconField.addIcon": "Aggiungi icona",
+    "novaIconField.modalTitle": "Seleziona icona",
+    "novaIconField.refreshButton": "Aggiorna",
+    "novaIconField.selectType.placeholder": "Tutte",
+    "novaIconField.selectType.default": "Seleziona un tipo",
+    "novaIconField.search.placeholder": "Cerca icone",
+    "novaIconField.loading": "Caricamento",
+    "novaIconField.save": "Salva",
+    "novaIconField.cancel": "Annulla",
+    "novaIconField.types.regular": "Regular",
+    "novaIconField.types.solid": "Solid",
+    "novaIconField.types.brands": "Brands",
+    "novaIconField.types.light": "Light",
+    "novaIconField.types.duotone": "Duotone",
+    "novaIconField.types.thin": "Thin",
+    "novaIconField.types.sharp-solid": "Sharp Solid",
+    "novaIconField.types.sharp-regular": "Sharp Regular",
+    "novaIconField.types.sharp-light": "Sharp Light"
+}
