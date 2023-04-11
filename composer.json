@@ -1,5 +1,6 @@
 {
     "name": "datomatic/nova-icon-field",
+    "version": "1.0.0",
     "description": "A icon selector field for Laravel Nova 4",
     "keywords": [
         "laravel",
