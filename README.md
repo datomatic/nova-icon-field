@@ -121,7 +121,7 @@ return [
     // ...
 ];
 ```
-The stored icon will be saved as `fa-solid fa-arrow-up` (which can be used as a FontAwesome class name). 
+The stored icon will be saved as `fa-solid fa-arrow-up` (which can be directly used as a FontAwesome class name). 
 
 In your code (i.e., while setting `only([...])` or `defaultIcon(...)`), you'll always be referring the icons and styles without any prefix/suffix. The prefixes/suffixes are just used in visualization and on (de-)hydration from (to) db.
 
@@ -137,6 +137,22 @@ One possible approach is to set a middleware which verifies the presence of a se
 
 If you want to set a rate limiter on the svg requests, remember that you have to skip the throttling when requesting the icons from the icon picker (since lots of icons will be loaded from there). 
 To achieve that, you can, for example, create a custom middleware which, depending on the presence of a query parameter with a secret token, disables/enables the rate limiter.
+
+### Visualize selected icons on the frontend
+
+The selected icon will be stored in database as a string composed by the selected style in kebab-case and the selected icon in kebab-case separated by a space, together with (if set in the config) additional prefixes and suffixes (e.g, `solid arrow-up`).
+
+In your frontend, you can obtain the SVG by using the endpoint:
+```
+http(s)://{host}/nova-icon-field/{style}/{icon}
+```
+You can change the `nova-icon-field` part of the url from the config. `{style}` and `{icon}` should be provided without prefixes/suffixes.
+
+To visualize the svg there are several alternatives: you can insert it via a `<img>` tag, an `<iframe>` tag, or also by using some framework-specific libraries such as:
+- Vue: [vue-inline-svg](https://www.npmjs.com/package/vue-inline-svg)
+- React: [react-svg](https://www.npmjs.com/package/react-svg)
+
+There are also many other ways. You should find by yourself which solution is more suited for your needs and your framework.
 
 ## License:
 
