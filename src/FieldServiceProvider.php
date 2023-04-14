@@ -36,7 +36,7 @@ class FieldServiceProvider extends ServiceProvider
 
     protected function registerRoutes(): void
     {
-        $dir = $this->getDir().'/Routes/';
+        $dir = $this->getDir().'/routes/';
         if ( ! is_dir($dir)) {
             return;
         }
@@ -63,7 +63,7 @@ class FieldServiceProvider extends ServiceProvider
 
     protected function registerConfigs(): void
     {
-        $dir = $this->getDir().'/config/';
+        $dir = $this->getDir().'/../config/';
         if ( ! is_dir($dir)) {
             return;
         }
