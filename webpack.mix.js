@@ -6,4 +6,4 @@ mix
   .setPublicPath('dist')
   .js('resources/js/field.js', 'dist/js/nova-icon-field.js')
   .vue({ version: 3 })
-  .nova('tecnobit-srl/nova-icon-field');
+  .nova('datomatic/nova-icon-field');
