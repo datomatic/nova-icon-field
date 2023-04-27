@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Datomatic\NovaIconField\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use TecnobitCore\Core\Http\Controllers\TecnobitController;
 
-class NovaIconFieldController extends TecnobitController
+class NovaIconFieldController extends Controller
 {
     protected function getStorage(): \Illuminate\Contracts\Filesystem\Filesystem
     {
