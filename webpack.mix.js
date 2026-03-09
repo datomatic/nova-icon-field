@@ -1,9 +1,8 @@
 let mix = require('laravel-mix');
-
-require('./mix');
+let config = require('./webpack.config');
 
 mix
   .setPublicPath('dist')
-  .js('resources/js/field.js', 'dist/js/nova-icon-field.js')
+  .js('resources/js/field.js', 'js/nova-icon-field.js')
   .vue({ version: 3 })
-  .nova('datomatic/nova-icon-field');
+  .webpackConfig(config);
