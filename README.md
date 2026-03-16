@@ -1,6 +1,6 @@
 # Nova Icon Field
 
-> A Laravel Nova 4 Field for svg icon selection.
+> A Laravel Nova 5 Field for svg icon selection.
 
 ---
 

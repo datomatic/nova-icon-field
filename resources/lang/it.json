@@ -16,5 +16,6 @@
     "novaIconField.types.thin": "Thin",
     "novaIconField.types.sharp-solid": "Sharp Solid",
     "novaIconField.types.sharp-regular": "Sharp Regular",
-    "novaIconField.types.sharp-light": "Sharp Light"
+    "novaIconField.types.sharp-light": "Sharp Light",
+    "novaIconField.noResults": "Nessuna icona trovata"
 }

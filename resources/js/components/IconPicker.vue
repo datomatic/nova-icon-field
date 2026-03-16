@@ -32,7 +32,7 @@
           v-model:selected="filter.style"
           class="w-full"
           :placeholder="__('All')"
-          @change="filter.style = $event"
+          @change="filter.style = $event.target.value"
         >
           <option value disabled="disabled">
             {{ __('novaIconField.selectType.default') }}
@@ -66,32 +66,40 @@
       <div v-if="isLoading" class="py-6 text-center text-md font-semibold">
         {{ __('novaIconField.loading') }}...
       </div>
-      <div
-        v-else-if="icons.length > 0 && !isLoading"
-        class="flex flex-wrap items-stretch"
-      >
+      <template v-else>
         <div
-          v-for="icon of iconsChunked"
-          :key="`${icon.style}_${icon.icon}`"
-          class="p-2 icon-box"
-          @click="saveIcon(icon.style, icon.icon)"
+          v-if="icons.length > 0"
+          class="flex flex-wrap items-stretch"
         >
           <div
-            class="rounded inner flex flex-col items-center justify-center text-center p-4 cursor-pointer"
+            v-for="icon of icons"
+            :key="`${icon.style}_${icon.icon}`"
+            class="p-2 icon-box"
+            @click="saveIcon(icon.style, icon.icon)"
           >
-            <inline-svg
-              :src="api.icon(icon.style, icon.icon)"
-              class="fill-current dark:fill-gray-300 w-6 h-6"
-              :aria-label="icon.icon"
-            />
             <div
-              class="text-xs leading-none mt-2 p-1 bg-gray-100 dark:bg-gray-700"
+              class="rounded inner flex flex-col items-center justify-center text-center p-4 cursor-pointer"
             >
-              {{ icon.icon }}
+              <inline-svg
+                :src="api.icon(icon.style, icon.icon)"
+                class="fill-current dark:fill-gray-300 w-6 h-6"
+                :aria-label="icon.icon"
+              />
+              <div
+                class="text-xs leading-none mt-2 p-1 bg-gray-100 dark:bg-gray-700"
+              >
+                {{ icon.icon }}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+        <div v-else class="py-6 text-center text-md font-semibold text-gray-400">
+          {{ __('novaIconField.noResults') }}
+        </div>
+        <div v-if="isLoadingMore" class="py-4 text-center text-sm text-gray-400">
+          {{ __('novaIconField.loading') }}...
+        </div>
+      </template>
     </div>
 
     <ModalFooter class="flex justify-end">
@@ -126,13 +134,15 @@ export default {
     iconContainer: null,
 
     isLoading: false,
+    isLoadingMore: false,
 
     styles: {},
     icons: [],
 
-    iconsChunked: [],
-    chunk: 0,
-    expanded: false,
+    currentPage: 1,
+    hasMore: false,
+    totalCount: 0,
+    searchDebounceTimer: null,
 
     filter: {
       style: 'all',
@@ -144,31 +154,20 @@ export default {
     totalIconsCount() {
       return Object.values(this.styles).reduce((s, r) => r + s, 0);
     },
-    filteredIcons() {
-      let icons = [];
-      for (const icon of this.icons) {
-        if (this.applyFilter(icon.style, icon.icon)) {
-          icons.push(icon);
-        }
-      }
-
-      return icons;
-    },
   },
 
   watch: {
     'filter.search': {
-      handler(val) {
-        this.filter.search = val;
-        this.clearChunks();
-        this.getChunk();
+      handler() {
+        clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = setTimeout(() => {
+          this.fetchIcons(true);
+        }, 300);
       },
     },
     'filter.style': {
-      handler(val) {
-        this.filter.style = val;
-        this.clearChunks();
-        this.getChunk();
+      handler() {
+        this.fetchIcons(true);
       },
     },
   },
@@ -178,170 +177,98 @@ export default {
   },
 
   async mounted() {
-    await this.loadIcons();
-
     this.iconContainer = document.querySelector('#iconContainer');
+    await this.fetchIcons(true);
+  },
 
-    this.$nextTick(() => {
-      this.getChunk();
-      this.isLoading = false;
-    });
+  beforeUnmount() {
+    clearTimeout(this.searchDebounceTimer);
   },
 
   methods: {
+    async fetchIcons(reset = false) {
+      if (reset) {
+        this.currentPage = 1;
+        this.icons = [];
+        this.isLoading = true;
+        if (this.iconContainer) {
+          this.iconContainer.scrollTop = 0;
+        }
+      } else {
+        this.isLoadingMore = true;
+      }
+
+      try {
+        const params = {
+          page: this.currentPage,
+          per_page: 100,
+          search: this.filter.search || '',
+          style: this.filter.style || 'all',
+        };
+
+        if (this.field.only && this.field.only.length > 0) {
+          params.only = JSON.stringify(this.field.only);
+        }
+
+        const response = await Nova.request().get(this.api.search(), {
+          headers: this.novaHeaders,
+          params,
+        });
+
+        const { data, meta, styles } = response.data;
+
+        if (reset) {
+          this.icons = data;
+        } else {
+          this.icons = [...this.icons, ...data];
+        }
+
+        this.styles = styles;
+        this.hasMore = meta.has_more;
+        this.totalCount = meta.total;
+      } finally {
+        this.isLoading = false;
+        this.isLoadingMore = false;
+      }
+    },
+
+    loadNextPage() {
+      if (!this.hasMore || this.isLoadingMore) {
+        return;
+      }
+      this.currentPage++;
+      this.fetchIcons(false);
+    },
+
     async refresh() {
       this.isLoading = true;
-
       this.styles = {};
       this.icons = [];
+
       await Nova.request().get(this.api.refresh(), {
         headers: this.novaHeaders,
       });
 
-      this.clearFilter();
-      await this.loadIcons();
-      this.clearChunks();
-
-      this.$nextTick(() => {
-        this.getChunk();
-        this.isLoading = false;
-      });
-    },
-
-    async loadIcons() {
-      const apiStyles = (
-        await Nova.request().get(this.api.styles(), {
-          headers: this.novaHeaders,
-        })
-      ).data;
-
-      const styles = {};
-      const icons = [];
-      for (const style of apiStyles) {
-        const styleIcons = (
-          await Nova.request().get(this.api.icons(style), {
-            headers: this.novaHeaders,
-          })
-        ).data;
-
-        for (const icon of styleIcons) {
-          if (this.canShowIcon(style, icon)) {
-            styles[style] = (styles[style] ?? 0) + 1;
-            icons.push({
-              style,
-              icon,
-            });
-          }
-        }
-      }
-      if (icons.length > 0) {
-        icons.sort((a, b) => (a.icon > b.icon ? 1 : b.icon > a.icon ? -1 : 0));
-      }
-
-      this.styles = styles;
-      this.icons = icons;
-    },
-    canShowIcon(style, icon) {
-      if (!style || !icon) {
-        return false;
-      }
-
-      if (
-        this.field.only &&
-        !this.field.only.find((i) => {
-          if (typeof i === 'string') {
-            if (i === style || i === icon) {
-              return true;
-            }
-            const [iS, iI] = this.getIconObject(i);
-            return iS === style && iI === icon;
-          }
-          if (typeof i !== 'object') {
-            return false;
-          }
-          if (!i['style'] && !i['icon']) {
-            return false;
-          }
-
-          return (
-            (!i['style'] || i['style'] === style) &&
-            (!i['icon'] || i['icon'] === icon)
-          );
-        })
-      ) {
-        return false;
-      }
-
-      return true;
+      this.filter.style = 'all';
+      this.filter.search = '';
+      await this.fetchIcons(true);
     },
 
     onScroll({ target: { scrollTop, clientHeight, scrollHeight } }) {
-      if (
-        scrollTop + clientHeight >= scrollHeight - 250 &&
-        this.expanded === false
-      ) {
-        this.expanded = true;
-        this.getChunk();
+      if (scrollTop + clientHeight >= scrollHeight - 250 && !this.isLoadingMore) {
+        this.loadNextPage();
       }
-    },
-    getChunk() {
-      let chunkSize = 100;
-
-      let nextChunk = this.filteredIcons.slice(
-        this.chunk,
-        this.chunk + chunkSize
-      );
-      this.iconsChunked = [...this.iconsChunked, ...nextChunk];
-
-      this.expanded = false;
-      this.chunk += chunkSize;
-    },
-    clearChunks() {
-      this.chunk = 0;
-      this.iconsChunked = [];
-      this.iconContainer.scrollTop = 0;
-    },
-
-    applyFilter(style, icon) {
-      return (
-        this.applyStyleFilter(style, icon) &&
-        this.applySearchFilter(style, icon)
-      );
-    },
-    applySearchFilter(style, icon) {
-      let keyword = this.filter.search?.trim().toUpperCase();
-      if (!keyword) {
-        return true;
-      }
-
-      let name = icon.toUpperCase();
-
-      let alt = keyword.replace('-', ' ');
-      let nameAlt = name.replace('-', ' ');
-
-      return name.includes(keyword) || nameAlt.includes(alt);
-    },
-    applyStyleFilter(style, icon) {
-      return (
-        !this.filter.style ||
-        this.filter.style === 'all' ||
-        this.filter.style === style
-      );
-    },
-
-    clearFilter() {
-      this.filter.style = 'all';
-      this.filter.search = '';
-      this.clearChunks();
     },
 
     saveIcon(style, icon) {
-      this.clearFilter();
+      this.filter.style = 'all';
+      this.filter.search = '';
       this.$emit('confirm', style, icon);
     },
 
     handleClose() {
-      this.clearFilter();
+      this.filter.style = 'all';
+      this.filter.search = '';
       this.$emit('close');
     },
   },

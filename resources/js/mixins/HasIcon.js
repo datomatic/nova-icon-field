@@ -42,6 +42,7 @@ export default {
           return url.toString();
         },
         refresh: () => this.field.refresh_url,
+        search: () => this.field.search_url,
       };
     },
     novaHeaders() {

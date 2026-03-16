@@ -19,6 +19,7 @@ class NovaIconField extends Field
             'icons_url' => route(config('nova-icon-field.route.name').'.icons', ['style' => '[style]'], false),
             'icon_url' => route(config('nova-icon-field.route.name').'.icon', ['style' => '[style]', 'icon' => '[icon]'], false),
             'refresh_url' => route(config('nova-icon-field.route.name').'.refresh', [], false),
+            'search_url' => route(config('nova-icon-field.route.name').'.search', [], false),
             'api_nova_headers' => config('nova-icon-field.route.nova_headers', []),
             'api_icon_params' => config('nova-icon-field.route.icon_params', []),
             'style_prefix' => config('nova-icon-field.style_prefix', ''),

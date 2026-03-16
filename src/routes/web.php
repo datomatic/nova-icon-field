@@ -11,6 +11,7 @@ Route::group(
         : [],
     function (): void {
         Route::get('refresh', [NovaIconFieldController::class, 'refresh'])->name('refresh');
+        Route::get('search', [NovaIconFieldController::class, 'search'])->name('search');
         Route::get('styles', [NovaIconFieldController::class, 'styles'])->name('styles');
         Route::get('{style}', [NovaIconFieldController::class, 'icons'])->name('icons');
     }
