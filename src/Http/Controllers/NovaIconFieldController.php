@@ -4,113 +4,50 @@ declare(strict_types=1);
 
 namespace Datomatic\NovaIconField\Http\Controllers;
 
+use Datomatic\NovaIconField\Services\IconService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class NovaIconFieldController extends Controller
 {
-    protected function getStorage(): \Illuminate\Contracts\Filesystem\Filesystem
+    public function styles(IconService $service): JsonResponse
     {
-        return Storage::disk(config('nova-icon-field.disk'));
+        return response()->json($service->getStyles());
     }
 
-    protected function sanitizeFilename(string $filename): string
+    public function icons(IconService $service, string $style): JsonResponse
     {
-        return preg_replace('/[^a-zA-Z0-9-]+/', '', Str::kebab($filename)) ?? '';
+        return response()->json($service->getIcons($style));
     }
 
-    public function styles(): JsonResponse
+    public function icon(IconService $service, string $style, string $icon): StreamedResponse|JsonResponse
     {
-        $styles = Cache::tags(['nova-icon-field', 'nova-icon-field.styles'])
-            ->rememberForever(
-                'nova-icon-field.styles',
-                fn () => array_map(
-                    fn ($directory) => $this->sanitizeFilename($directory),
-                    $this->getStorage()->directories()
-                )
-            );
+        $style = $service->sanitizeFilename($style);
+        $icon = $service->sanitizeFilename($icon);
 
-        return response()->json($styles);
-    }
-
-    public function icons(string $style): JsonResponse
-    {
-        $style = $this->sanitizeFilename($style);
-
-        $icons = Cache::tags(['nova-icon-field', 'nova-icon-field.icons'])
-            ->rememberForever(
-                'nova-icon-field.icons.'.$style,
-                fn () => array_map(
-                    fn ($file) => $this->sanitizeFilename(pathinfo($file, PATHINFO_FILENAME)),
-                    $this->getStorage()->files($style)
-                )
-            );
-
-        return response()->json($icons);
-    }
-
-    public function icon(string $style, string $icon): StreamedResponse | JsonResponse
-    {
-        $style = $this->sanitizeFilename($style);
-        $icon = $this->sanitizeFilename($icon);
-
+        $storage = Storage::disk(config('nova-icon-field.disk'));
         $path = $style.DIRECTORY_SEPARATOR.$icon;
         $pathWithExtension = $path.'.svg';
 
-        if($this->getStorage()->exists($pathWithExtension)) {
-            return $this->getStorage()->download($pathWithExtension);
+        if ($storage->exists($pathWithExtension)) {
+            return $storage->download($pathWithExtension);
         }
-        if($this->getStorage()->exists($path)) {
-            return $this->getStorage()->download($path);
+        if ($storage->exists($path)) {
+            return $storage->download($path);
         }
+
         return response()->json(['status' => 'not_found'], 404);
     }
 
-    public function refresh(): JsonResponse
+    public function refresh(IconService $service): JsonResponse
     {
-        Cache::tags('nova-icon-field')->flush();
+        $service->flush();
 
         return response()->json(['status' => 'ok']);
-    }
-
-    /**
-     * Build and cache a flat, sorted array of all icons across all styles.
-     *
-     * @return array<int, array{style: string, icon: string}>
-     */
-    protected function getMasterIndex(): array
-    {
-        return Cache::tags(['nova-icon-field', 'nova-icon-field.icons'])
-            ->rememberForever(
-                'nova-icon-field.master-index',
-                function () {
-                    $storage = $this->getStorage();
-                    $styles = array_map(
-                        fn ($directory) => $this->sanitizeFilename($directory),
-                        $storage->directories()
-                    );
-
-                    $icons = [];
-                    foreach ($styles as $style) {
-                        $files = array_map(
-                            fn ($file) => $this->sanitizeFilename(pathinfo($file, PATHINFO_FILENAME)),
-                            $storage->files($style)
-                        );
-                        foreach ($files as $icon) {
-                            $icons[] = ['style' => $style, 'icon' => $icon];
-                        }
-                    }
-
-                    usort($icons, fn ($a, $b) => strcmp($a['icon'], $b['icon']));
-
-                    return $icons;
-                }
-            );
     }
 
     /**
@@ -125,7 +62,6 @@ class NovaIconFieldController extends Controller
                 if ($rule === $style || $rule === $icon) {
                     return true;
                 }
-                // Try parsing as "style icon" format
                 $parts = explode(' ', $rule, 2);
                 if (count($parts) === 2) {
                     $ruleStyle = preg_replace('/[^a-zA-Z0-9-]+/', '', Str::kebab($parts[0])) ?? '';
@@ -151,7 +87,7 @@ class NovaIconFieldController extends Controller
         return false;
     }
 
-    public function search(Request $request): JsonResponse
+    public function search(IconService $service, Request $request): JsonResponse
     {
         $search = (string) $request->input('search', '');
         $styleFilter = (string) $request->input('style', 'all');
@@ -160,7 +96,7 @@ class NovaIconFieldController extends Controller
         $onlyRaw = $request->input('only');
         $only = is_string($onlyRaw) ? json_decode($onlyRaw, true) : null;
 
-        $allIcons = $this->getMasterIndex();
+        $allIcons = $service->getMasterIndex();
 
         // Apply "only" filter
         if (is_array($only) && count($only) > 0) {
@@ -178,7 +114,7 @@ class NovaIconFieldController extends Controller
 
         // Apply style filter
         if ($styleFilter !== '' && $styleFilter !== 'all') {
-            $safeStyle = $this->sanitizeFilename($styleFilter);
+            $safeStyle = $service->sanitizeFilename($styleFilter);
             $allIcons = array_values(array_filter(
                 $allIcons,
                 fn ($item) => $item['style'] === $safeStyle

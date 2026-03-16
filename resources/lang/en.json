@@ -13,9 +13,17 @@
     "novaIconField.types.brands": "Brands",
     "novaIconField.types.light": "Light",
     "novaIconField.types.duotone": "Duotone",
+    "novaIconField.types.duotone-light": "Duotone Light",
+    "novaIconField.types.duotone-regular": "Duotone Regular",
+    "novaIconField.types.duotone-thin": "Duotone Thin",
     "novaIconField.types.thin": "Thin",
     "novaIconField.types.sharp-solid": "Sharp Solid",
     "novaIconField.types.sharp-regular": "Sharp Regular",
     "novaIconField.types.sharp-light": "Sharp Light",
+    "novaIconField.types.sharp-thin": "Sharp Thin",
+    "novaIconField.types.sharp-duotone-solid": "Sharp Duotone Solid",
+    "novaIconField.types.sharp-duotone-regular": "Sharp Duotone Regular",
+    "novaIconField.types.sharp-duotone-light": "Sharp Duotone Light",
+    "novaIconField.types.sharp-duotone-thin": "Sharp Duotone Thin",
     "novaIconField.noResults": "No icons found"
 }

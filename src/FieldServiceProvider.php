@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Datomatic\NovaIconField;
 
+use Datomatic\NovaIconField\Console\Commands\CacheIconsCommand;
 use Illuminate\Support\Facades\Route;
 use Laravel\Nova\Nova;
 use Laravel\Nova\Events\ServingNova;
@@ -27,6 +28,12 @@ class FieldServiceProvider extends ServiceProvider
         $this->registerConfigs();
 
         $this->registerRoutes();
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                CacheIconsCommand::class,
+            ]);
+        }
     }
 
     public function register(): void

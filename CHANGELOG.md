@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2026-03-16
+
+### Added
+- New `IconService` class (`Services/IconService.php`) that centralizes all icon data and cache logic
+- New `CacheIconsCommand` artisan command to warm icons' cache
+
+### Changed
+- Refactored `NovaIconFieldController` to use `IconService` via method injection instead of inline cache/storage logic
+
 ## [2.0.0] - 2026-03-16
 
 ### Breaking Changes

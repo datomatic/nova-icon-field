@@ -59,6 +59,14 @@ The expected directory structure has directories on the root defining the availa
 
 The storage will be explored just once, and the results will be cached in your Laravel cache. If you make some changes on the files (e.g., add/remove an icon or a directory), you have to press the "update" button on the icon picker to see the changes.
 
+You can also warm the cache from the command line:
+
+```bash
+php artisan nova-icon-field:cache
+```
+
+This will flush the existing cache and re-cache all styles, icons and the master index. You can add this command to your deployment script to ensure the cache is always warm after a deploy.
+
 Styles and icons will be considered depending on the folder and file names (without extension), transformed in kebab-case. So if your icon file is named `Your Beautiful Icon.svg`, the icon name will be `your-beautiful-icon`.
 
 ## Usage:
