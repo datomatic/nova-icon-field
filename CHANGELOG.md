@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.1] - 2026-03-16
+
+### Fixed
+- Style filter selector resetting after selection due to `SelectControl` options re-rendering on every search response
+
 ## [2.1.0] - 2026-03-16
 
 ### Added

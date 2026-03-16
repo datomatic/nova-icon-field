@@ -223,7 +223,9 @@ export default {
           this.icons = [...this.icons, ...data];
         }
 
-        this.styles = styles;
+        if (Object.keys(this.styles).length === 0) {
+          this.styles = styles;
+        }
         this.hasMore = meta.has_more;
         this.totalCount = meta.total;
       } finally {
